@@ -1,7 +1,3 @@
-Below is the **FULL English version of `README.md`**, translated and polished in a **research / thesis / public GitHub–ready style**, while **keeping exactly your project structure, experiments, and T4 results**.
-
-You can **copy–paste this directly** into `README.md`.
-
 ---
 
 # 📄 Information-Extraction-from-Image
@@ -311,17 +307,8 @@ Confidence 0.3 - Best Char Acc: YOLO + TrOCR | Best Word Acc: YOLO + CRNN (Ours)
 
 ## 👤 Author
 
-* **Name**: *Your Name*
+* **Name**: *Ly Nguyen*
 * **Purpose**: Research / OCR Benchmarking
 * **GPU Used**: NVIDIA T4
 
 ---
-
-If you want, I can next help you:
-
-* ✍️ Rewrite this README in **academic-paper style**
-* 📊 Format results for **IEEE / Springer tables**
-* 🧠 Propose **T4-optimized OCR architectures**
-* 📦 Refactor the project into a **config-driven pipeline**
-
-Just tell me your next goal.
