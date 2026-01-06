@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Training outputs
+runs/
+wandb/
+
+# Cache
+cache/*.pkl
+
+# Large datasets 
+datasets/SceneTrialTrain/*.jpg
+
+# OS
+.DS_Store
