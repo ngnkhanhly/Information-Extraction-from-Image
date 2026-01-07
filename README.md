@@ -3,23 +3,41 @@
 
 # 📄 Information-Extraction-from-Image
 
-**Two-stage OCR Pipeline: YOLO + CRNN**
+**Two-stage OCR Benchmark: YOLO-based Detection + Sequence Recognition**
 
 ---
 
-## 📌 Introduction
+## 📌 Project Overview
 
-This project implements a **two-stage Optical Character Recognition (OCR) pipeline** for **text extraction from images**, consisting of:
+This project studies a **two-stage Optical Character Recognition (OCR) pipeline** that decouples **text detection** and **text recognition**, with the goal of analyzing **accuracy–latency trade-offs** across different OCR system designs.
 
-1. **Text Detection** using YOLO
-2. **Text Recognition** using CRNN + CTC
-3. **Benchmarking and comparison** with other popular OCR pipelines
+Rather than building a production-ready OCR service, the project focuses on:
 
-The project is designed for **research and experimental analysis**, focusing on:
+* Understanding design choices in OCR pipelines
+* Comparing sequence-based and transformer-based recognizers
+* Measuring inference efficiency under controlled conditions
 
-* Accuracy comparison between OCR architectures
-* Trade-offs between **recognition accuracy and inference speed**
-* OCR performance analysis on **NVIDIA T4 GPU**
+The work is conducted as a **research and experimental benchmark** on a fixed dataset and hardware setup.
+
+---
+
+## 🧠 OCR Pipelines Evaluated
+
+The following OCR pipelines are implemented and compared:
+
+1. **YOLO + CRNN (Ours)**
+
+   * Detection: YOLO-based text detector
+   * Recognition: CRNN with CTC loss
+
+2. **YOLO + TrOCR**
+
+   * Same detector as above
+   * Transformer-based OCR recognizer
+
+3. **EasyOCR (End-to-End baseline)**
+
+   * Off-the-shelf OCR pipeline
 
 ---
 
@@ -34,10 +52,10 @@ Information-Extraction-from-Image/
 │       └── *.jpg
 │
 ├── src/
-│   ├── detection.py        # XML → YOLO format
-│   ├── recognition.py     # CRNN + CTC
-│   ├── pipeline.py        # Inference pipelines
-│   └── evaluation.py      # Metrics & evaluation
+│   ├── detection.py        # XML parsing & YOLO label generation
+│   ├── recognition.py     # CRNN + CTC implementation
+│   ├── pipeline.py        # End-to-end OCR inference
+│   └── evaluation.py      # Accuracy & speed metrics
 │
 ├── model/
 │   ├── yolo/
@@ -69,137 +87,40 @@ Information-Extraction-from-Image/
 pip install -r requirements.txt
 ```
 
-> 🔧 **Recommended**: Run on **Google Colab with NVIDIA T4 GPU**
-> Local execution is mainly for debugging or lightweight inference.
+**Recommended environment**:
+
+* Google Colab
+* NVIDIA T4 GPU
+
+Local execution is supported for debugging or lightweight inference but is **not recommended for training** without GPU acceleration.
 
 ---
 
-## ▶️ How to Run the Project (Colab vs Local)
+## ▶️ Reproducibility & Execution
 
-The project supports **two execution modes**, controlled by the following flag:
+The project supports execution on **Google Colab** or **local machines**, controlled by a single configuration flag:
 
 ```python
 USE_COLAB = True
 ```
 
-This flag determines how **Google Drive is mounted** and how `PROJECT_ROOT` is defined.
+* `USE_COLAB = True`: mount Google Drive and set project root accordingly
+* `USE_COLAB = False`: run from local project root directory
+
+All experiments were conducted using the same configuration and hardware setup to ensure fair comparison.
 
 ---
 
-## 🟢 Running on Google Colab (USE_COLAB = True) — Recommended
+## 🧪 Experimental Workflow
 
-### 1️⃣ Prepare the Project Folder
-
-* Download the **entire project folder**
-* Upload the **whole folder** to Google Drive, for example:
-
-```text
-MyDrive/
-└── Information-Extraction-from-Image/
-    ├── datasets/
-    ├── src/
-    ├── model/
-    ├── notebook/
-    └── requirements.txt
-```
-
-⚠️ **Important**
-Do **not** upload individual files.
-Always upload the **entire project directory** to preserve the folder structure.
-
----
-
-### 2️⃣ Notebook Configuration
-
-Keep the following code **unchanged** in all notebooks:
-
-```python
-USE_COLAB = True
-
-if USE_COLAB:
-    from google.colab import drive
-    drive.mount("/content/drive")
-    PROJECT_ROOT = "/content/drive/MyDrive/Information-Extraction-from-Image"
-else:
-    PROJECT_ROOT = os.path.abspath(".")
-```
-
-Expected output:
-
-```text
-PROJECT_ROOT: /content/drive/MyDrive/Information-Extraction-from-Image
-```
-
----
-
-### 3️⃣ Run the Notebooks (in order)
-
-```text
-notebook/01_text_detection_training.ipynb
-notebook/02_text_recognition_training.ipynb
-notebook/03_model_comparision.ipynb
-```
-
-Enable GPU:
-
-```text
-Runtime → Change runtime type → GPU (NVIDIA T4)
-```
-
----
-
-## 🔵 Running Locally (USE_COLAB = False)
-
-### 1️⃣ Change Configuration
-
-In the notebooks:
-
-```python
-USE_COLAB = False
-```
-
-Then:
-
-```python
-PROJECT_ROOT = os.path.abspath(".")
-```
-
----
-
-### 2️⃣ Local Execution Notes
-
-* Notebooks must be executed from the **project root directory**
-* If no GPU is available:
-
-  * CRNN and TrOCR will be **very slow**
-  * Training is **not recommended**
-
----
-
-## 🧠 OCR Pipeline Overview
-
-```text
-Input Image
-     ↓
-YOLO (Text Detection)
-     ↓
-Crop text regions
-     ↓
-CRNN + CTC (Text Recognition)
-     ↓
-OCR Output
-```
-
----
-
-## 🧪 Notebook 01 — Text Detection (YOLO)
+### Notebook 01 — Text Detection Training
 
 📘 `notebook/01_text_detection_training.ipynb`
 
-* Parse annotations from `words.xml`
+* Parse word-level annotations from `words.xml`
 * Convert bounding boxes to YOLO format
-* Train YOLO text detector
-* Save the best-performing model
+* Train a YOLO-based text detector
+* Select the best model based on validation performance
 
 **Output**:
 
@@ -209,15 +130,17 @@ model/yolo/best.pt
 
 ---
 
-## 🔤 Notebook 02 — Text Recognition (CRNN + CTC)
+### Notebook 02 — Text Recognition Training (CRNN)
 
 📘 `notebook/02_text_recognition_training.ipynb`
 
-### Architecture:
+**Model architecture**:
 
-* Backbone: **ResNet34**
-* Sequence model: **Bi-GRU**
-* Loss function: **CTC Loss**
+* Backbone: ResNet34
+* Sequence model: Bidirectional GRU
+* Loss: CTC Loss
+
+The recognizer is trained on cropped text regions produced by the detector.
 
 **Output**:
 
@@ -227,23 +150,40 @@ model/cnn/ocr_crnn.pt
 
 ---
 
-## ⚖️ Notebook 03 — OCR Pipeline Comparison
+### Notebook 03 — OCR Pipeline Comparison
 
 📘 `notebook/03_model_comparision.ipynb`
 
-### Evaluated Pipelines
+This notebook evaluates and compares multiple OCR pipelines under identical settings.
 
-| Pipeline               | Detection  | Recognition |
-| ---------------------- | ---------- | ----------- |
-| **YOLO + CRNN (Ours)** | YOLO       | CRNN        |
-| YOLO + TrOCR           | YOLO       | TrOCR       |
-| EasyOCR                | End-to-End | EasyOCR     |
+---
 
-### Evaluation Settings
+## 📏 Evaluation Protocol
 
-* Confidence threshold: **0.3**
-* IoU threshold: **0.3**
-* GPU: **NVIDIA T4**
+* Detection filtering:
+
+  * Confidence threshold: **0.3**
+  * IoU threshold: **0.3**
+* Character Accuracy:
+
+  * Computed using normalized Levenshtein distance at character level
+* Word Accuracy:
+
+  * Exact string match
+* Speed:
+
+  * Average inference time per image (seconds/image)
+* Hardware:
+
+  * NVIDIA T4 GPU
+
+---
+
+## ⚖️ Benchmarking Notes
+
+* YOLO-based pipelines share the **same detection results** to isolate recognition performance
+* TrOCR and EasyOCR use **pre-trained weights** without additional fine-tuning
+* The benchmark emphasizes **relative comparison**, not absolute state-of-the-art performance
 
 ---
 
@@ -257,12 +197,12 @@ COMPARISON RESULTS - CONFIDENCE THRESHOLD = 0.3
   YOLO + CRNN (Ours)     90.762663     76.923077       1.725653              195
         YOLO + TrOCR     91.533326     76.410256       0.794261              195
 EasyOCR (End-to-End)     81.221196     54.464286       0.173435              112
-
-====================================================================================================
-SUMMARY
-====================================================================================================
-Confidence 0.3 - Best Char Acc: YOLO + TrOCR | Best Word Acc: YOLO + CRNN (Ours)
 ```
+
+**Summary**:
+
+* Best Character Accuracy: **YOLO + TrOCR**
+* Best Word Accuracy: **YOLO + CRNN**
 
 ---
 
@@ -270,46 +210,50 @@ Confidence 0.3 - Best Char Acc: YOLO + TrOCR | Best Word Acc: YOLO + CRNN (Ours)
 
 * **YOLO + CRNN**
 
-  * Achieves the **highest Word Accuracy**
-  * Slowest inference on T4 due to:
+  * Achieves the highest word-level accuracy
+  * Slowest inference due to:
 
-    * Bi-GRU (sequential RNN operations)
-    * Small-batch inference
+    * Sequential Bi-GRU computation
+    * Small batch size for cropped text inference
     * Frequent CPU–GPU synchronization
 
 * **YOLO + TrOCR**
 
-  * Best **Character Accuracy**
-  * Faster than CRNN due to Transformer-based recognition
+  * Best character-level accuracy
+  * Faster inference due to parallel transformer decoding
 
 * **EasyOCR**
 
   * Fastest inference
-  * Significantly lower accuracy
+  * Lower accuracy, especially at word level
+
+From an engineering perspective, the CRNN pipeline is primarily bottlenecked by **sequential sequence modeling**, rather than detection cost.
 
 ---
 
 ## 📌 Conclusion
 
-* **YOLO + CRNN** is suitable when **accuracy is the priority**
-* **YOLO + TrOCR** provides the **best balance** between speed and accuracy on T4
-* **EasyOCR** is appropriate for **real-time applications** with lower accuracy requirements
+* Two-stage OCR pipelines allow flexible trade-offs between accuracy and latency
+* CRNN-based recognizers remain competitive in accuracy but suffer from inference inefficiency
+* Transformer-based OCR provides a better balance under GPU execution
+* End-to-end OCR systems prioritize speed over accuracy
 
 ---
 
 ## 🚀 Future Work
 
-* Replace CRNN with lightweight Transformer OCR
-* Batch recognition inference
+* Replace CRNN with lightweight transformer-based OCR
+* Batch text-region recognition to reduce overhead
 * ONNX / TensorRT optimization
-* Experiments on NVIDIA L4 / A100 GPUs
+* Experiments on newer GPUs (L4, A100)
 
 ---
 
 ## 👤 Author
 
-* **Name**: *Ly Nguyen*
-* **Purpose**: Research / OCR Benchmarking
-* **GPU Used**: NVIDIA T4
+* **Name**: Ly Nguyen
+* **Project Type**: OCR Research & Benchmarking
+* **Focus**: Model comparison and system-level trade-off analysis
+* **Hardware**: NVIDIA T4 GPU
 
 ---
